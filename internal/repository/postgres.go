@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"URL_shortener_2/internal/domain"
 	"URL_shortener_2/pkg/postgres"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
@@ -18,10 +19,10 @@ func newDbRepo() *dbRepo {
 	return &dbRepo{Pool: pgpool}
 }
 
-func (r dbRepo) Save(longUrl string) {
-
+func (r dbRepo) Save(url *domain.Url) error {
+	return nil
 }
 
-func (r dbRepo) Get(longUrl string) string {
-	return ""
+func (r dbRepo) Get(shortUrl string) (*domain.Url, error) {
+	return nil, nil
 }

@@ -1,9 +1,16 @@
 package repository
 
+import (
+	"URL_shortener_2/internal/domain"
+	"errors"
+)
+
 type Repository interface {
-	Save(longUrl string)
-	Get(shortUrl string) string
+	Save(url *domain.Url) error
+	Get(shortUrl string) (*domain.Url, error)
 }
+
+var errNoSuchUrl error = errors.New("no such url is in storage")
 
 func New(storageType string) Repository {
 	if storageType == "cache" {

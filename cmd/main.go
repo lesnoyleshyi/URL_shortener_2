@@ -12,8 +12,8 @@ import (
 
 func main() {
 	var storageType string
-	flag.StringVar(&storageType, "storageType", "pg",
-		"choose storageType to save URLs: pg for postgres, cache for in-memory")
+	flag.StringVar(&storageType, "storage", "pg",
+		"choose storage to save URLs: pg for postgres, cache for in-memory")
 	flag.Parse()
 
 	repo := repository.New(storageType)
@@ -28,4 +28,12 @@ func main() {
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("Server failed unexpectidly with error: %s", err)
 	}
+	//done := make(chan os.Signal, 1)
+	//signal.Notify(done, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	//
+	//go func() {
+	//	<-done
+	//}()
+	//
+	//<-done
 }
