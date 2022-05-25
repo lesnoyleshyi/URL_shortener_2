@@ -1,12 +1,11 @@
-version: "3.3"
+version: "3.4"
 
 services:
   api:
     depends_on:
       - postgres
-      - nats
     build: .
-    container_name: api
+    container_name: api_shortener
     networks:
       - my_network
     hostname: api
@@ -23,7 +22,7 @@ services:
 
   postgres:
     image: postgres:14
-    container_name: postgres
+    container_name: postgres_shortener
     networks:
       - my_network
     hostname: postgres
@@ -42,6 +41,7 @@ services:
     restart: on-failure
 volumes:
   postgres_storage:
+    name: shortener2_volume
 
 networks:
   my_network:

@@ -3,13 +3,18 @@ package services
 import (
 	"URL_shortener_2/internal/domain"
 	"URL_shortener_2/internal/repository"
+	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v4"
 	"time"
 )
 
 type Service interface {
+	//Save saves given longUrl, generates and returns shortUrl or error
 	Save(longUrl string) (shortUrl string, err error)
-	Get(shortUrl string) (*domain.Url, error)
+	//Get receives url and returns it's "opposite" url:
+	//if shortUrl is given, it returns longUrl and vice versa
+	Get(shortOrLongUrl string) (longOrShortUrl string, err error)
 }
 
 type service struct {
@@ -32,6 +37,19 @@ func (s service) Save(longUrl string) (string, error) {
 	return Url.ShortUrl, nil
 }
 
-func (s service) Get(url string) (*domain.Url, error) {
-	return s.repo.Get(url)
+func (s service) Get(url string) (string, error) {
+	urlStruct, err := s.repo.Get(url)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", repository.ErrNoSuchUrl
+		}
+		return "", err
+	}
+	//As we don't divide Get method to 'getByShort' and 'getByLong',
+	//we have to decide what url should be returned: long or short.
+	if urlStruct.LongUrl == url {
+		return urlStruct.ShortUrl, nil
+	} else {
+		return urlStruct.LongUrl, nil
+	}
 }

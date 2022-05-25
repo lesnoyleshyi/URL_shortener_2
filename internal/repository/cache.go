@@ -2,7 +2,6 @@ package repository
 
 import (
 	"URL_shortener_2/internal/domain"
-	"errors"
 	"sync"
 )
 
@@ -36,32 +35,32 @@ func (c *cacheRepo) Save(url *domain.Url) error {
 	return nil
 }
 
-func (c *cacheRepo) GetByShort(shortUrl string) (*domain.Url, error) {
+func (c *cacheRepo) getByShort(shortUrl string) (*domain.Url, error) {
 	c.RLock()
 	url, ok := (*c.mapShortKey)[shortUrl]
 	c.RUnlock()
 	if !ok {
-		return nil, errors.New("no such url is in storage")
+		return nil, ErrNoSuchUrl
 	}
 	return url, nil
 }
 
-func (c *cacheRepo) GetByLong(longUrl string) (*domain.Url, error) {
+func (c *cacheRepo) getByLong(longUrl string) (*domain.Url, error) {
 	c.RLock()
 	url, ok := (*c.mapLongKey)[longUrl]
 	c.RUnlock()
 	if !ok {
-		return nil, errNoSuchUrl
+		return nil, ErrNoSuchUrl
 	}
 	return url, nil
 }
 
 func (c *cacheRepo) Get(url string) (*domain.Url, error) {
-	URlptr, err := c.GetByShort(url)
+	URlptr, err := c.getByShort(url)
 	if err == nil {
 		return URlptr, nil
 	}
-	URlptr, err = c.GetByLong(url)
+	URlptr, err = c.getByLong(url)
 	if err == nil {
 		return URlptr, nil
 	}

@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"URL_shortener_2/internal/repository"
 	"URL_shortener_2/internal/services"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -40,42 +42,49 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 //processShort retrieves shortened URL and writes to w corresponding long URL
 //or error if such shortened URL is not in storage
 func (h handler) processShort(w http.ResponseWriter, r *http.Request) {
-	url, err := getUrlFromRequest(w, r)
+	shortUrl, err := getUrlFromRequest(w, r)
 	if err != nil {
-		log.Printf("unable retreive url from request: %s", err)
+		log.Printf("unable retreive shortUrl from request: %s", err)
 		return
 	}
-	//retrieve short URL from storage
-	urlStruct, err := h.service.Get(url)
+	//retrieve URL from storage
+	longUrl, err := h.service.Get(shortUrl)
 	if err != nil {
-		if err.Error() == "no such url is in storage" {
-			respondWithError(w, "no such url", http.StatusBadRequest)
+		if errors.Is(err, repository.ErrNoSuchUrl) {
+			respondWithError(w, "no such shortUrl", http.StatusBadRequest)
 		} else {
-			log.Printf("unable retrieve url from storage: %s", err)
+			log.Printf("unable retrieve shortUrl from storage: %s", err)
 			respondWithError(w, "server-side error", http.StatusInternalServerError)
 		}
 		return
 	}
-	respondSuccess(w, urlStruct.LongUrl)
+	respondSuccess(w, longUrl)
 }
 
 //processLong retrieves original URL, saves it in storage
 //and returns it's shortened version
 func (h handler) processLong(w http.ResponseWriter, r *http.Request) {
-	url, err := getUrlFromRequest(w, r)
+	longUrl, err := getUrlFromRequest(w, r)
 	if err != nil {
-		log.Printf("unable retreive url from request: %s", err)
+		log.Printf("unable retreive longUrl from request: %s", err)
 		return
 	}
 	//if such URL is in storage, return it's shortened version
-	url1, err := h.service.Get(url)
-	if url1 != nil {
-		respondSuccess(w, url1.ShortUrl)
+	shortUrl, err := h.service.Get(longUrl)
+	if err == nil {
+		respondSuccess(w, shortUrl)
 		return
 	}
 	//if no such URL is in storage, save it firstly and then return it's shortened version
-	shortUrl, err := h.service.Save(url)
-	respondSuccess(w, shortUrl)
+	if errors.Is(err, repository.ErrNoSuchUrl) {
+		shortUrl, err = h.service.Save(longUrl)
+		respondSuccess(w, shortUrl)
+		return
+	} else {
+		//if some other error occurred, we mustn't save this longUrl
+		log.Printf("unable retrieve longUrl from storage: %s", err)
+		respondWithError(w, "server-side error", http.StatusInternalServerError)
+	}
 }
 
 //getUrlFromRequest reads body from Request, marshall it to request struct

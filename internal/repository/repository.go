@@ -10,7 +10,7 @@ type Repository interface {
 	Get(shortUrl string) (*domain.Url, error)
 }
 
-var errNoSuchUrl error = errors.New("no such url is in storage")
+var ErrNoSuchUrl = errors.New("no such url is in storage")
 
 func New(storageType string) Repository {
 	if storageType == "cache" {
