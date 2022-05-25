@@ -7,7 +7,7 @@ import (
 
 type Repository interface {
 	Save(url *domain.Url) error
-	Get(shortUrl string) (*domain.Url, error)
+	Get(Url string) (*domain.Url, error)
 }
 
 var ErrNoSuchUrl = errors.New("no such url is in storage")

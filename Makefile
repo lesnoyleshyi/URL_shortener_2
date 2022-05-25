@@ -7,7 +7,7 @@ build:
 			docker build -t lesnoyleshyi/$(IMG) .
 
 push:
-			docker push docker push lesnoyleshyi/url_shortener:latest
+			docker push lesnoyleshyi/url_shortener:latest
 
 run_cache:	build
 			docker run --rm --detach --name $(IMG_NAME) -p "8080:8080" $(IMG) --storage cache
