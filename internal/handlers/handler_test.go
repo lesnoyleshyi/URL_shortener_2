@@ -30,6 +30,15 @@ func TestGetUrlFromRequest(t *testing.T) {
 			WantJsonResponse: `{"error":"empty body"}`,
 		},
 		{
+			name:             "POST with empty JSON",
+			httpMethod:       http.MethodPost,
+			reqBody:          strings.NewReader("{}"),
+			WantUrl:          "",
+			WantErr:          fmt.Errorf("incorrect data in body"),
+			WantHTTPStatus:   http.StatusBadRequest,
+			WantJsonResponse: `{"error":"incorrect data in body"}`,
+		},
+		{
 			name:             "POST with wrong data in body 1",
 			httpMethod:       http.MethodPost,
 			reqBody:          strings.NewReader(`{"url": aboba.com}`),
@@ -49,11 +58,12 @@ func TestGetUrlFromRequest(t *testing.T) {
 		},
 	}
 
-	//Act&Assert
+	//Act
 	for _, tc := range testCases {
 		rec := httptest.NewRecorder()
 		request := httptest.NewRequest(tc.httpMethod, "/", tc.reqBody)
 		url, err := getUrlFromRequest(rec, request)
+		//Assert
 		if url != tc.WantUrl {
 			t.Errorf("getUrlFromRequest returns incorrect url: want %s, got %s",
 				tc.WantUrl, url)
@@ -74,4 +84,12 @@ func TestGetUrlFromRequest(t *testing.T) {
 				tc.WantJsonResponse, rec.Body.String())
 		}
 	}
+}
+
+func TestProcessShort(t *testing.T) {
+
+}
+
+func TestProcessLong(t *testing.T) {
+
 }

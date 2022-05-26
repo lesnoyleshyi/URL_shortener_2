@@ -4,10 +4,15 @@ import (
 	"URL_shortener_2/internal/handlers"
 	"URL_shortener_2/internal/repository"
 	"URL_shortener_2/internal/services"
+	"context"
 	"errors"
 	"flag"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
@@ -19,21 +24,38 @@ func main() {
 	repo := repository.New(storageType)
 	service := services.New(&repo)
 	handler := handlers.New(service)
-	server := http.Server{
-		Addr:    ":8080",
-		Handler: handler,
-	}
+	server := http.Server{Addr: ":8080", Handler: handler}
 
-	err := server.ListenAndServe()
+	done := make(chan struct{})
+
+	go startServer(&server, &done)
+	go shutdown(&server, &done)
+
+	<-done
+}
+
+func startServer(srv *http.Server, done *chan struct{}) {
+	defer close(*done)
+	err := srv.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("Server failed unexpectidly with error: %s", err)
+	} else {
+		log.Println("Server stopped gracefully")
 	}
-	//done := make(chan os.Signal, 1)
-	//signal.Notify(done, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-	//
-	//go func() {
-	//	<-done
-	//}()
-	//
-	//<-done
+}
+
+func shutdown(srv *http.Server, done *chan struct{}) {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	sig := <-ch
+	log.Printf("%s signal caught, shutting down gracefully", sig)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer func() {
+		cancel()
+		close(*done)
+	}()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server shutdown failed: %s", err)
+	}
 }
