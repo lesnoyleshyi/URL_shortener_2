@@ -35,7 +35,7 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		h.processShort(w, r)
 	default:
-		http.Error(w, "unsupported method", http.StatusMethodNotAllowed)
+		respondWithError(w, "unsupported method", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -78,6 +78,7 @@ func (h handler) processLong(w http.ResponseWriter, r *http.Request) {
 	//if no such URL is in storage, save it firstly and then return it's shortened version
 	if errors.Is(err, repository.ErrNoSuchUrl) {
 		shortUrl, err = h.service.Save(longUrl)
+		w.WriteHeader(http.StatusCreated)
 		respondSuccess(w, shortUrl)
 		return
 	} else {

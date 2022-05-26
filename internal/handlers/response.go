@@ -12,6 +12,10 @@ type response struct {
 }
 
 func respondWithError(w http.ResponseWriter, respMsg string, status int) {
+	//if caller forget to pass respMsg, answer shouldn't be "{}"
+	if respMsg == "" {
+		respMsg = "unknown error"
+	}
 	responseStruct := response{Error: respMsg}
 
 	w.WriteHeader(status)
@@ -27,6 +31,10 @@ func respondWithError(w http.ResponseWriter, respMsg string, status int) {
 }
 
 func respondSuccess(w http.ResponseWriter, url string) {
+	if url == "" {
+		respondWithError(w, "server-side error", http.StatusInternalServerError)
+		return
+	}
 	resp, err := json.Marshal(response{Url: url})
 	if err != nil {
 		log.Printf("unable marshall response: %s", err)

@@ -89,29 +89,70 @@ func TestGetUrlFromRequest(t *testing.T) {
 	}
 }
 
-//TestProcessShort tests handler's ServeHTTP method,
-//thus it could be used for testing testProcessLong also
-func TestProcessShort(t *testing.T) {
+func TestHandler_ServeHTTP(t *testing.T) {
 	//Arrange
 	type mockBehaviour func(s *mock_services.MockService, url string)
 
 	testTable := []struct {
-		name                 string
-		requestBody          string
-		url                  string
-		mockBehaviour        mockBehaviour
-		expectedStatusCode   int
+		//name of test for debug messages
+		name string
+		//what we get from client
+		requestBody string
+		//what getUrlFromRequest should retrieve from request's body
+		url string
+		//method in request's header (POST for processLong, GET for processShort)
+		method string
+		//...
+		mockBehaviour mockBehaviour
+		//What status code do we expect in response's header
+		expectedStatusCode int
+		//What content do we expect in response's body
 		expectedResponseBody string
 	}{
 		{
-			name:        "ok",
+			name:        "ok_shortUrl",
+			requestBody: `{"url":"RandS10Len"}`,
+			url:         "RandS10Len",
+			method:      http.MethodGet,
+			mockBehaviour: func(s *mock_services.MockService, url string) {
+				s.EXPECT().Get(url).Return("https://habr.com/ru/post/425025/", nil)
+			},
+			expectedStatusCode:   http.StatusOK,
+			expectedResponseBody: `{"url":"https://habr.com/ru/post/425025/"}`,
+		},
+		{
+			name:        "ok_longUrl_that_already_in_storage",
 			requestBody: `{"url":"https://youtu.be/Mvw5fbHGJFw"}`,
+			method:      http.MethodPost,
 			url:         "https://youtu.be/Mvw5fbHGJFw",
 			mockBehaviour: func(s *mock_services.MockService, url string) {
 				s.EXPECT().Get(url).Return("randSLen10", nil)
 			},
-			expectedStatusCode:   200,
+			expectedStatusCode:   http.StatusOK,
 			expectedResponseBody: `{"url":"randSLen10"}`,
+		},
+		//{
+		//	name:        "ok_longUrl_that_wasnt_in_storage",
+		//	requestBody: `{"url":"https://youtu.be/Mvw5fbHGJFw"}`,
+		//	method:      http.MethodPost,
+		//	url:         "https://youtu.be/Mvw5fbHGJFw",
+		//	mockBehaviour: func(s *mock_services.MockService, url string) {
+		//		gomock.InOrder(
+		//			s.EXPECT().Get(url),
+		//			s.EXPECT().Save(url).Return("randSLen10", nil),
+		//		)
+		//	},
+		//	expectedStatusCode:   http.StatusCreated,
+		//	expectedResponseBody: `{"url":"randSLen10"}`,
+		//},
+		{
+			name:                 "not_ok_unsupported method",
+			requestBody:          `{"url":"https://youtu.be/Mvw5fbHGJFw"}`,
+			method:               http.MethodPatch,
+			url:                  "https://youtu.be/Mvw5fbHGJFw",
+			mockBehaviour:        func(s *mock_services.MockService, url string) {},
+			expectedStatusCode:   http.StatusMethodNotAllowed,
+			expectedResponseBody: `{"error":"unsupported method"}`,
 		},
 	}
 	//Act
@@ -123,7 +164,6 @@ func TestProcessShort(t *testing.T) {
 
 			//create mocked service
 			service := mock_services.NewMockService(c)
-
 			//run function ?FOR WHAT?
 			tc.mockBehaviour(service, tc.url)
 
@@ -131,7 +171,7 @@ func TestProcessShort(t *testing.T) {
 			handler := New(service)
 			//dummy ResponseWriter and dummy request
 			w := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodGet, "/", strings.NewReader(tc.requestBody))
+			req := httptest.NewRequest(tc.method, "/", strings.NewReader(tc.requestBody))
 			//Real handler's ServeHTTP call with dummy params
 			handler.ServeHTTP(w, req)
 
@@ -144,8 +184,4 @@ func TestProcessShort(t *testing.T) {
 					tc.name, tc.expectedResponseBody, w.Body.String()))
 		})
 	}
-}
-
-func TestProcessLong(t *testing.T) {
-
 }

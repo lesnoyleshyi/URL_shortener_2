@@ -37,5 +37,7 @@ get:
 			curl -L -X GET 'localhost:8080' -H 'Content-Type: application/json' --data-raw \
   			'{"url": "GET_IT_FROM_POST_ANSWER"}'
 
+test:
+			go test -v ./internal/handlers -coverprofile=coverage.out && go tool cover -html=coverage.out && rm coverage.out
 
 .PHONY:		build run_cache stop_cache rm_cache run_pg rm_pg rmrf_pg post get
