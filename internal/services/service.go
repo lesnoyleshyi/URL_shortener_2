@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+//go:generate mockgen -source=service.go -destination=moks/mock.go
+
 type Service interface {
 	//Save saves given longUrl, generates and returns shortUrl or error
 	Save(longUrl string) (shortUrl string, err error)

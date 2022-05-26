@@ -29,5 +29,13 @@ rmrf_pg:	rm_pg
 			docker rm postgres_shortener
 			docker volume rm shortener2_volume
 
+post:
+			curl -L -X POST 'localhost:8080' -H 'Content-Type: application/json' --data-raw \
+  			'{"url": "https://github.com/lesnoyleshyi/URL_shortener_2/"}'
 
-.PHONY:		build run_cache stop_cache rm_cache run_pg rm_pg rmrf_pg
+get:
+			curl -L -X GET 'localhost:8080' -H 'Content-Type: application/json' --data-raw \
+  			'{"url": "GET_IT_FROM_POST_ANSWER"}'
+
+
+.PHONY:		build run_cache stop_cache rm_cache run_pg rm_pg rmrf_pg post get

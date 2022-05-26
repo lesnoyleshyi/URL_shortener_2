@@ -28,14 +28,14 @@ func main() {
 
 	done := make(chan struct{})
 
-	go startServer(&server)
+	go start(&server)
 	shutdown(&server, done)
 
 	<-done
 	log.Println("Server stopped gracefully")
 }
 
-func startServer(srv *http.Server) {
+func start(srv *http.Server) {
 	err := srv.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("Server failed unexpectidly with error: %s", err)
