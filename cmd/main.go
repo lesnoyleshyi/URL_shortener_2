@@ -29,7 +29,7 @@ func main() {
 	done := make(chan struct{})
 
 	go startServer(&server)
-	shutdown(&server, &done)
+	shutdown(&server, done)
 
 	<-done
 	log.Println("Server stopped gracefully")
@@ -42,7 +42,7 @@ func startServer(srv *http.Server) {
 	}
 }
 
-func shutdown(srv *http.Server, done *chan struct{}) {
+func shutdown(srv *http.Server, done chan struct{}) {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
@@ -51,7 +51,7 @@ func shutdown(srv *http.Server, done *chan struct{}) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer func() {
 		cancel()
-		close(*done)
+		close(done)
 	}()
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Server shutdown failed: %s", err)
